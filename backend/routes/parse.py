@@ -3,7 +3,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 
 from config import ALLOWED_DOMAIN
-from scraper import CaptchaRequiredError, HeyboxScraper
+from scraper import CaptchaRequiredError, CooldownError, HeyboxScraper
 
 router = APIRouter()
 
@@ -18,10 +18,17 @@ async def parse_api(url: str):
 
     try:
         result = await asyncio.to_thread(HeyboxScraper.scrape, url)
+    except CooldownError as e:
+        return {
+            "captcha_required": True,
+            "cooldown": e.remaining,
+            "message": f"操作过于频繁，已进入冷却，请 {e.remaining} 秒后重试或手动下载",
+            "url": url,
+        }
     except CaptchaRequiredError:
         return {
             "captcha_required": True,
-            "message": "返回验证码，无法自动解析该帖子，请手动下载",
+            "message": "返回验证码或操作过于频繁，无法自动解析该帖子，请稍后重试或手动下载",
             "url": url,
         }
     except Exception as e:

@@ -14,10 +14,37 @@ const videoTitle = $('#videoTitle');
 const videoDesc = $('#videoDesc');
 
 function setLoading(on) {
-  btn.disabled = on;
-  input.disabled = on;
   spinner.classList.toggle('active', on);
-  btnLabel.textContent = on ? '解析中…' : '解析';
+  input.disabled = on;
+  if (on) {
+    btn.disabled = true;
+    btnLabel.textContent = '解析中…';
+  } else if (!cooldownTimer) {
+    // 冷却倒计时进行中时不要解禁按钮
+    btn.disabled = false;
+    btnLabel.textContent = '解析';
+  }
+}
+
+let cooldownTimer = null;
+
+function startCooldown(seconds) {
+  clearInterval(cooldownTimer);
+  let left = seconds;
+  btn.disabled = true;
+  btnLabel.textContent = `冷却 ${left}s`;
+
+  cooldownTimer = setInterval(() => {
+    left -= 1;
+    if (left <= 0) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+      btn.disabled = false;
+      btnLabel.textContent = '解析';
+    } else {
+      btnLabel.textContent = `冷却 ${left}s`;
+    }
+  }, 1000);
 }
 
 function showError(msg, url, type = 'error') {
@@ -73,7 +100,8 @@ async function doParse() {
     if (res.ok) {
       if (data.captcha_required) {
         player.removeAttribute('src');
-        showError(data.message || '返回验证码，无法自动解析该帖子，请手动下载', data.url || url, 'warning');
+        showError(data.message || '返回验证码或操作过于频繁，无法自动解析该帖子，请稍后重试或手动下载', data.url || url, 'warning');
+        if (data.cooldown) startCooldown(data.cooldown);
         return;
       }
 
