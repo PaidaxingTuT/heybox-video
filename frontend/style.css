@@ -46,9 +46,9 @@
   --btn-secondary-bg: rgba(0, 0, 0, 0.03);
   --btn-secondary-border: rgba(0, 0, 0, 0.08);
   --btn-secondary-hover-bg: rgba(0, 0, 0, 0.06);
-  --error-bg: rgba(0, 0, 0, 0.04);
-  --error-border: rgba(0, 0, 0, 0.1);
-  --error-text: #555;
+  --error-bg: rgba(220, 50, 50, 0.08);
+  --error-border: rgba(220, 50, 50, 0.2);
+  --error-text: #c53030;
   --toast-bg: rgba(255, 255, 255, 0.75);
   --toast-border: rgba(0, 0, 0, 0.08);
   --toast-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
@@ -92,9 +92,9 @@ html.dark {
   --btn-secondary-bg: rgba(255, 255, 255, 0.04);
   --btn-secondary-border: rgba(255, 255, 255, 0.08);
   --btn-secondary-hover-bg: rgba(255, 255, 255, 0.08);
-  --error-bg: rgba(255, 255, 255, 0.04);
-  --error-border: rgba(255, 255, 255, 0.08);
-  --error-text: #999;
+  --error-bg: rgba(255, 70, 70, 0.12);
+  --error-border: rgba(255, 70, 70, 0.2);
+  --error-text: #fc8181;
   --toast-bg: rgba(30, 30, 30, 0.75);
   --toast-border: rgba(255, 255, 255, 0.08);
   --toast-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
