@@ -1,4 +1,4 @@
 HOST = "127.0.0.1"
-PORT = 8002
+PORT = 9002
 PLAYWRIGHT_TIMEOUT = 3000  # ms
 ALLOWED_DOMAIN = "xiaoheihe.cn"
