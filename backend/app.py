@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from routes.parse import router
 
@@ -22,8 +22,6 @@ def create_app() -> FastAPI:
 
     app.include_router(router)
 
-    @app.get("/")
-    async def index():
-        return FileResponse(FRONTEND_DIR / "index.html")
+    app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
     return app
