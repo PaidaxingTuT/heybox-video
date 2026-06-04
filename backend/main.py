@@ -17,12 +17,12 @@ def ensure_chromium():
             p.chromium.launch(headless=True).close()
     except Exception:
         import subprocess
-        print("🔧 首次运行，正在安装 Chromium 浏览器（约 150MB）…")
+        print("🔧 首次运行，正在安装 Chromium 浏览器…")
         subprocess.run(
             [sys.executable, "-m", "playwright", "install", "chromium"],
             check=True,
         )
-        print("✅ Chromium 安装完成")
+        print("Chromium 安装完成")
 
 
 app = create_app()
