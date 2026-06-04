@@ -21,7 +21,7 @@ uv run start
 
 首次运行会自动安装 Chromium 浏览器（约 150MB），之后直接启动。
 
-服务跑在 `http://127.0.0.1:9002`，浏览器打开，粘贴小黑盒 App 的帖子**分享链接**即可解析视频。
+服务跑在 `http://127.0.0.1:9003`，浏览器打开，粘贴小黑盒 App 的帖子**分享链接**即可解析视频。
 
 ## 项目结构
 
@@ -30,14 +30,16 @@ heybox_video/
 ├── backend/
 │   ├── app.py          # FastAPI 应用
 │   ├── config.py       # 配置
-│   ├── main.py         # 入口（自动装 Chromium）
+│   ├── main.py         # 启动
 │   ├── scraper.py      # Playwright 视频抓取
 │   ├── routes/
 │   │   └── parse.py    # /api/parse 路由
 │   ├── pyproject.toml  # Python 项目配置
 │   └── requirements.txt # pip 兼容
 ├── frontend/
-│   └── index.html      # 前端页面
+│   ├── index.html      # 页面结构
+│   ├── style.css       # 样式
+│   └── script.js       # 交互逻辑
 └── README.md
 ```
 
