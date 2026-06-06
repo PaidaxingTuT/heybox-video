@@ -1,35 +1,34 @@
-import sys
 import asyncio
+import sys
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 import uvicorn
 from app import create_app
-from config import HOST, PORT
+from config import BROWSER_BACKEND, HOST, PORT
 
 
 def ensure_chromium():
-    """第一次运行时自动安装 Playwright Chromium。"""
+    """Ensure the configured browser backend is importable without launching a browser."""
+    if BROWSER_BACKEND == "nodriver":
+        try:
+            import nodriver  # noqa: F401
+        except ImportError as exc:
+            raise RuntimeError("nodriver is not installed. Run `uv add nodriver` first.") from exc
+        return
+
     try:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            p.chromium.launch(headless=True).close()
-    except Exception:
-        import subprocess
-        print("🔧 首次运行，正在安装 Chromium 浏览器…")
-        subprocess.run(
-            [sys.executable, "-m", "playwright", "install", "chromium"],
-            check=True,
-        )
-        print("Chromium 安装完成")
+        import playwright  # noqa: F401
+    except ImportError as exc:
+        raise RuntimeError("Playwright is not installed. Run `uv sync` first.") from exc
 
 
 app = create_app()
 
 
 def main():
-    """入口：装 Chromium → 启动服务。"""
+    """Start the FastAPI server."""
     ensure_chromium()
     uvicorn.run(app, host=HOST, port=PORT)
 
