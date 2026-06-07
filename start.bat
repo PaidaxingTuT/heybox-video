@@ -21,7 +21,7 @@ if %errorlevel%==0 (
         popd
         exit /b 1
     )
-    call uv run start
+    call uv run main.py
     set "EXIT_CODE=%errorlevel%"
     popd
     exit /b %EXIT_CODE%
