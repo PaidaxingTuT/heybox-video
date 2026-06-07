@@ -1,15 +1,16 @@
 # Heybox Video
 
-小黑盒帖子视频直链解析工具。粘贴帖子链接，一键获取视频直链，支持在线预览和下载。
+小黑盒帖子视频直链解析工具。粘贴分享链接，一键获取视频直链，支持在线预览和下载。
 
 ## 技术栈
 
-| 层     | 技术                  |
-| ------ | --------------------- |
-| 前端   | 原生 HTML/CSS/JS      |
-| 后端   | Python 3.12 + FastAPI |
-| 抓取   | Playwright (Chromium) |
-| 包管理 | uv                    |
+| 层 | 技术 |
+| --- | --- |
+| 前端 | 原生 HTML / CSS / JS |
+| 后端 | Python 3.12 + FastAPI |
+| 轻量解析 | requests |
+| 浏览器回退 | nodriver / Playwright |
+| 包管理 | uv |
 
 ## 快速开始
 
@@ -19,72 +20,115 @@ uv sync
 uv run start
 ```
 
-首次运行会自动安装 Chromium 浏览器（约 150MB），之后直接启动。
+服务默认运行在 `http://127.0.0.1:9003`。
 
-服务默认跑在 `http://127.0.0.1:9003`，浏览器打开，粘贴小黑盒 App 的帖子**分享链接**即可解析视频。
+浏览器里打开后，粘贴小黑盒 App 的帖子分享链接即可解析。
 
-启动后会弹出一个 Chrome 窗口，这是抓取用的浏览器，**保持开着别关**（关掉后下次解析会自动重新拉起）。
+## 当前解析流程
+
+后端采用“两段式”解析：
+
+1. 先走轻量 HTTP fast path，不启动浏览器。
+2. 如果 fast path 已经拿到视频直链，直接返回结果。
+3. 如果 fast path 没抓到视频，才回退到浏览器 worker。
+4. 默认浏览器后端是 `nodriver`，并且会先尝试无头模式。
+5. 只有遇到验证码、人工验证或类似风控场景时，才会升级为有头浏览器窗口。
+
+这意味着：
+
+- 正常可解析的链接，不会一上来就弹浏览器。
+- 同一个链接是否触发风控是实时变化的，不能永久假设某条链接一定安全。
+- 浏览器阶段拿到的 cookie / storage 会回写到本地会话文件，后续 fast path 会优先复用。
+
+## 安装说明
+
+项目当前依赖：
+
+- `fastapi`
+- `uvicorn`
+- `requests`
+- `nodriver`
+- `playwright`
+
+如果你是新增依赖，推荐使用：
+
+```bash
+uv add <package>
+```
 
 ## 配置
 
-监听地址和端口可用环境变量覆盖，无需改代码：
+可通过环境变量覆盖以下配置：
 
-| 变量          | 默认值      | 说明                                          |
-| ------------- | ----------- | --------------------------------------------- |
-| `HEYBOX_HOST` | `127.0.0.1` | 监听地址。默认仅本机可访问；改 `0.0.0.0` 开放局域网 |
-| `HEYBOX_PORT` | `9003`      | 监听端口                                      |
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `HEYBOX_HOST` | `127.0.0.1` | 监听地址 |
+| `HEYBOX_PORT` | `9003` | 监听端口 |
+| `HEYBOX_BROWSER_BACKEND` | `nodriver` | 浏览器回退后端，可选 `nodriver` / `playwright` |
 
-其余参数（抓取超时、验证码冷却时长 `CAPTCHA_COOLDOWN`、是否有头运行 `PLAYWRIGHT_HEADLESS` 等）直接改 `backend/config.py` 里的常量。
+其余参数位于 [backend/config.py](D:/Code/Python/heybox_video/backend/config.py)，例如：
 
-## 手机 / 局域网访问
+- `PLAYWRIGHT_HEADLESS`
+- `PLAYWRIGHT_TIMEOUT`
+- `CAPTCHA_MANUAL_TIMEOUT`
+- `CAPTCHA_COOLDOWN`
 
-默认只绑定 `127.0.0.1`，**只有运行后端的这台电脑能访问**。想用手机（或同一网络的其他设备）访问，把监听地址开放到局域网即可：
+## 验证码与风控
 
-```bash
-# Windows (PowerShell)
-$env:HEYBOX_HOST="0.0.0.0"; uv run start
-# macOS / Linux
-HEYBOX_HOST=0.0.0.0 uv run start
-```
+小黑盒的风控不是固定的，同一个帖子可能现在能解析，稍后又触发验证。
 
-然后在手机浏览器打开 `http://<电脑的局域网IP>:9003`（电脑 IP 用 `ipconfig` / `ifconfig` 查，形如 `192.168.x.x`）。手机和电脑需在同一 WiFi 下。
+当前策略是：
 
-> ⚠️ **安全提醒**：绑定 `0.0.0.0` 后，**同一网络下的任何设备都能访问这个后端，且没有任何鉴权**。仅建议在自己可信的家庭 WiFi 下这么做。不要在公司网络、公共 WiFi 使用，也不要把端口转发到公网——那等于把一个无密码的服务暴露出去。
+- fast path 先尝试，不命中就回退浏览器。
+- 浏览器优先无头运行，尽量不打扰使用。
+- 检测到验证码时，才打开可见窗口等待人工处理。
+- 验证失败或超时后，会进入冷却期，避免持续撞风控。
 
-## 关于验证码
+## 元数据策略
 
-小黑盒有反爬风控，偶尔会要求人机验证。本工具的处理方式：
+返回结构保持兼容，接口仍然返回：
 
-- 抓取浏览器已尽量伪装成正常用户（自洽的 UA、隐藏自动化标志、复用会话），**降低验证码触发概率**，但无法做到永不触发。
-- **触发验证码时，验证窗口会弹在「运行后端的那台电脑」上**，需要在那台电脑上手动拖一下滑块完成验证——手机用户看不到也碰不到这个窗口。所以典型用法是：你在自己电脑上跑后端、用自己手机访问，验证码弹出时走到电脑前过一下即可。
-- 若短时间内频繁触发，会进入冷却（默认 90s），期间前端按钮倒计时禁用。可随时点「打开原链接」去小黑盒 App/网页直接查看作为兜底。
+- `video_url`
+- `meta.title`
+- `meta.description`
+- `captcha_required`
+- `cooldown`
+
+元数据提取规则做过收敛：
+
+- 有标题时优先用标题。
+- 没有标题时回退到简介。
+- 不再把评论区内容当作帖子简介。
 
 ## 项目结构
 
-```
+```text
 heybox_video/
 ├── backend/
-│   ├── app.py          # FastAPI 应用
-│   ├── config.py       # 配置
-│   ├── main.py         # 启动
-│   ├── scraper.py      # Playwright 视频抓取
+│   ├── app.py
+│   ├── config.py
+│   ├── main.py
+│   ├── scraper.py
+│   ├── heybox_fast.py
+│   ├── heybox_browser_nodriver.py
+│   ├── heybox_browser_playwright.py
 │   ├── routes/
-│   │   └── parse.py    # /api/parse 路由
-│   ├── pyproject.toml  # Python 项目配置
-│   └── requirements.txt # pip 兼容
+│   │   └── parse.py
+│   ├── pyproject.toml
+│   └── requirements.txt
 ├── frontend/
-│   ├── index.html      # 页面结构
-│   ├── style.css       # 样式
-│   └── script.js       # 交互逻辑
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
 └── README.md
 ```
 
 ## 说明
 
-- 仅支持 `api.xiaoheihe.cn` 域名的帖子分享链接
-- 首次启动自动下载 Chromium，无需手动安装
-- 抓取浏览器以有头模式运行（便于手动完成验证码），需要图形界面；无人值守的纯命令行服务器不适用本工具
-- 视频资源版权归小黑盒及原作者所有，请勿用于商业用途
+- 仅支持 `xiaoheihe.cn` 相关帖子分享链接。
+- 服务启动时只检查依赖可用性，不会主动拉起浏览器。
+- 浏览器仅作为回退链路使用，不是所有请求都会经过浏览器。
+- 视频资源版权归小黑盒及原作者所有，请勿用于商业用途。
 
 ## License
 
