@@ -33,7 +33,7 @@ start.bat
 ```bash
 cd backend
 uv sync
-uv run start
+uv run main.py
 ```
 
 服务默认运行在 `http://127.0.0.1:9003`。
