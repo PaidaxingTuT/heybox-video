@@ -10,7 +10,7 @@
 | 后端 | Python 3.12 + FastAPI |
 | 轻量解析 | requests |
 | 浏览器回退 | nodriver / Playwright |
-| 包管理 | uv |
+| 包管理 | uv / pip |
 
 ## 快速开始
 
@@ -26,7 +26,7 @@ start.bat
 - 自动执行 `uv sync`
 - 自动启动后端服务
 - 如果系统没有 `uv`，会自动回退到 `python` / `pip`
-- 回退时会自动创建 `backend/.venv`、安装依赖并启动服务
+- 回退时会自动创建 `backend\.venv`、安装依赖并启动服务
 
 如果你想手动启动，也可以用下面的命令行方式：
 
@@ -82,7 +82,7 @@ uv add <package>
 | `HEYBOX_PORT` | `9003` | 监听端口 |
 | `HEYBOX_BROWSER_BACKEND` | `nodriver` | 浏览器回退后端，可选 `nodriver` / `playwright` |
 
-其余参数位于 [backend/config.py](D:/Code/Python/heybox_video/backend/config.py)，例如：
+其余参数位于 [backend/config.py](backend/config.py)，例如：
 
 - `PLAYWRIGHT_HEADLESS`
 - `PLAYWRIGHT_TIMEOUT`
@@ -119,7 +119,7 @@ uv add <package>
 ## 项目结构
 
 ```text
-heybox_video/
+heybox-video/
 ├── backend/
 │   ├── app.py
 │   ├── config.py
@@ -131,11 +131,12 @@ heybox_video/
 │   ├── routes/
 │   │   └── parse.py
 │   ├── pyproject.toml
-│   └── requirements.txt
+│   └── uv.lock
 ├── frontend/
 │   ├── index.html
 │   ├── style.css
 │   └── script.js
+├── start.bat
 └── README.md
 ```
 
