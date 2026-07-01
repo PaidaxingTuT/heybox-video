@@ -41,7 +41,7 @@ class HeyboxFastMixin:
     PRIMARY_META_CONTAINER_KEYS = ("link", "post", "article", "link_info")
     PRIMARY_CONTAINER_PARENT_KEYS = ("result", "data")
     VIDEO_URL_RE = re.compile(
-        r"https?://[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]+?(?:\.mp4|\.m3u8)(?:[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]*)",
+        r"https?://[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]+?(?:\.mp4|\.m3u8|\.mov)(?:[A-Za-z0-9._~:/?#\[\]@!$&()*+,;=%-]*)",
         re.IGNORECASE,
     )
     LINK_ID_PATH_RE = re.compile(r"/bbs/link/([A-Za-z0-9]+)", re.IGNORECASE)
@@ -103,7 +103,7 @@ class HeyboxFastMixin:
     @classmethod
     def _looks_like_video_url(cls, url: str) -> bool:
         lower_url = url.lower()
-        return ".mp4" in lower_url or ".m3u8" in lower_url
+        return ".mp4" in lower_url or ".m3u8" in lower_url or ".mov" in lower_url
 
     @staticmethod
     def _is_post_detail_response(url: str) -> bool:
