@@ -1,4 +1,5 @@
 import asyncio
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException
 
@@ -8,12 +9,22 @@ from scraper import CaptchaRequiredError, CooldownError, HeyboxScraper
 router = APIRouter()
 
 
+def is_bbs_post_url(url: str) -> bool:
+    parsed = urlparse(url)
+    hostname = (parsed.hostname or "").lower()
+    return (
+        parsed.scheme in {"http", "https"}
+        and (hostname == ALLOWED_DOMAIN or hostname.endswith(f".{ALLOWED_DOMAIN}"))
+        and "bbs" in parsed.path.split("/")
+    )
+
+
 @router.get("/api/parse")
 async def parse_api(url: str):
     if not url:
         raise HTTPException(status_code=400, detail="链接不能为空")
 
-    if ALLOWED_DOMAIN not in url:
+    if not is_bbs_post_url(url):
         raise HTTPException(status_code=400, detail="请粘贴有效的小黑盒链接")
 
     try:
